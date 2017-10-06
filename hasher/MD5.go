@@ -6,19 +6,24 @@ import (
 	"fmt"
 )
 
-func (h *Hasher) MD5() (hash string) {
-	dbToFrom := db.NewDB("hash_db/MD5/to_from")
-	dbFromTo := db.NewDB("hash_db/MD5/from_to")
+func (h *Hasher) MD5() {
+	h.wg.Add(1)
 
-	hash, err := dbFromTo.Get(h.input)
-	if err == nil {
-		return
-	}
+	go func() {
+		defer h.wg.Done()
 
-	hash = fmt.Sprintf("%x", md5.Sum([]byte(h.input)))
+		var err error
+		dbToFrom := db.NewDB("hash_db/MD5/to_from")
+		dbFromTo := db.NewDB("hash_db/MD5/from_to")
 
-	dbToFrom.Set(hash, h.input)
-	dbFromTo.Set(h.input, hash)
+		h.hashes.MD5, err = dbFromTo.Get(h.input)
+		if err == nil {
+			return
+		}
 
-	return
+		h.hashes.MD5 = fmt.Sprintf("%x", md5.Sum([]byte(h.input)))
+
+		dbToFrom.Set(h.hashes.MD5, h.input)
+		dbFromTo.Set(h.input, h.hashes.MD5)
+	}()
 }

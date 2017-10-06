@@ -21,7 +21,9 @@ func Hash(w http.ResponseWriter, r *http.Request) {
 
 		h := hasher.NewHasher()
 		h.SetInput(input)
-		hashes := h.AllHashes()
+		h.Hash()
+
+		hashes := h.GetHashes()
 
 		hashList, err := json.MarshalIndent(hashes, "", "  ")
 		if err != nil {

@@ -6,19 +6,24 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-func (h *Hasher) SHA3_224() (hash string) {
-	dbToFrom := db.NewDB("hash_db/SHA3_224/to_from")
-	dbFromTo := db.NewDB("hash_db/SHA3_224/from_to")
+func (h *Hasher) SHA3_224() {
+	h.wg.Add(1)
 
-	hash, err := dbFromTo.Get(h.input)
-	if err == nil {
-		return
-	}
+	go func() {
+		defer h.wg.Done()
 
-	hash = fmt.Sprintf("%x", sha3.Sum224([]byte(h.input)))
+		var err error
+		dbToFrom := db.NewDB("hash_db/SHA3_224/to_from")
+		dbFromTo := db.NewDB("hash_db/SHA3_224/from_to")
 
-	dbToFrom.Set(hash, h.input)
-	dbFromTo.Set(h.input, hash)
+		h.hashes.SHA3_224, err = dbFromTo.Get(h.input)
+		if err == nil {
+			return
+		}
 
-	return
+		h.hashes.SHA3_224 = fmt.Sprintf("%x", sha3.Sum224([]byte(h.input)))
+
+		dbToFrom.Set(h.hashes.SHA3_224, h.input)
+		dbFromTo.Set(h.input, h.hashes.SHA3_224)
+	}()
 }

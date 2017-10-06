@@ -6,19 +6,24 @@ import (
 	"fmt"
 )
 
-func (h *Hasher) SHA384() (hash string) {
-	dbToFrom := db.NewDB("hash_db/SHA384/to_from")
-	dbFromTo := db.NewDB("hash_db/SHA384/from_to")
+func (h *Hasher) SHA384() {
+	h.wg.Add(1)
 
-	hash, err := dbFromTo.Get(h.input)
-	if err == nil {
-		return
-	}
+	go func() {
+		defer h.wg.Done()
 
-	hash = fmt.Sprintf("%x", sha512.Sum384([]byte(h.input)))
+		var err error
+		dbToFrom := db.NewDB("hash_db/SHA384/to_from")
+		dbFromTo := db.NewDB("hash_db/SHA384/from_to")
 
-	dbToFrom.Set(hash, h.input)
-	dbFromTo.Set(h.input, hash)
+		h.hashes.SHA384, err = dbFromTo.Get(h.input)
+		if err == nil {
+			return
+		}
 
-	return
+		h.hashes.SHA384 = fmt.Sprintf("%x", sha512.Sum384([]byte(h.input)))
+
+		dbToFrom.Set(h.hashes.SHA384, h.input)
+		dbFromTo.Set(h.input, h.hashes.SHA384)
+	}()
 }

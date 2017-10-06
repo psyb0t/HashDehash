@@ -6,19 +6,24 @@ import (
 	"fmt"
 )
 
-func (h *Hasher) SHA224() (hash string) {
-	dbToFrom := db.NewDB("hash_db/SHA224/to_from")
-	dbFromTo := db.NewDB("hash_db/SHA224/from_to")
+func (h *Hasher) SHA224() {
+	h.wg.Add(1)
 
-	hash, err := dbFromTo.Get(h.input)
-	if err == nil {
-		return
-	}
+	go func() {
+		defer h.wg.Done()
 
-	hash = fmt.Sprintf("%x", sha256.Sum224([]byte(h.input)))
+		var err error
+		dbToFrom := db.NewDB("hash_db/SHA224/to_from")
+		dbFromTo := db.NewDB("hash_db/SHA224/from_to")
 
-	dbToFrom.Set(hash, h.input)
-	dbFromTo.Set(h.input, hash)
+		h.hashes.SHA224, err = dbFromTo.Get(h.input)
+		if err == nil {
+			return
+		}
 
-	return
+		h.hashes.SHA224 = fmt.Sprintf("%x", sha256.Sum224([]byte(h.input)))
+
+		dbToFrom.Set(h.hashes.SHA224, h.input)
+		dbFromTo.Set(h.input, h.hashes.SHA224)
+	}()
 }
