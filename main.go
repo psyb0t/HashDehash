@@ -4,7 +4,12 @@ import (
 	"HashDehash/handlers"
 	"log"
 	"net/http"
+	"runtime"
 )
+
+func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU() / 2)
+}
 
 func main() {
 	router := http.NewServeMux()
