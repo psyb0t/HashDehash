@@ -54,7 +54,7 @@ func (db *DB) Set(key, value string) error {
 	key = base64.StdEncoding.EncodeToString([]byte(key))
 
 	f, err := os.OpenFile(path.Join(db.path, key),
-		os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0660)
+		os.O_WRONLY|os.O_CREATE, 0660)
 	defer f.Close()
 	if err != nil {
 		return err
